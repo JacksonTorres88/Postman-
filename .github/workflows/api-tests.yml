@@ -1,33 +1,60 @@
-name: API Tests (Postman CLI)
+name: API Tests (Newman)
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - ".github/workflows/**"
+      - "tests/**"
+      - "README.md"
   pull_request:
+    paths:
+      - "tests/**"
+      - ".github/workflows/**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  run-postman-cli:
+  run-newman:
     runs-on: ubuntu-latest
-    env:
-      # Usa el secreto que ya creaste en GitHub Settings > Secrets and variables
-      POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Postman CLI via npm (alternativa)
-        run: |
-          npm i -g @postman/cli
-          postman --version
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-
-      - name: Login to Postman
+      - name: Install Newman + HTML reporter
         run: |
-          echo "$POSTMAN_API_KEY" | postman login --with-api-key
+          npm install -g newman newman-reporter-htmlextra
 
-      - name: Run collection from Postman Cloud
+      # Ajustá las rutas si tus archivos están en otro lado
+      - name: Run Postman collection with Newman
         run: |
-          postman collection run 20016255-55c899e1-089e-4721-94ef-c6b16778af73 \
-            -e 20016255-9b06f11b-cbac-45c2-9c7e-37af71a24185
+          mkdir -p reports
+          newman run tests/rickandmorty_collection.json \
+            -e tests/rickandmorty_environment.json \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-export reports/newman-report.html \
+            --reporter-junit-export reports/newman-junit.xml
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report-html
+          path: reports/newman-report.html
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report-junit
+          path: reports/newman-junit.xml
