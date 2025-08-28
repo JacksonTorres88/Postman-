@@ -1,39 +1,31 @@
-name: API Tests (Newman)
+name: API Tests (Postman CLI)
 
 on:
   push:
     branches: [ main ]
   pull_request:
-  workflow_dispatch:  # permite ejecutarlo a mano
+  workflow_dispatch:
 
 jobs:
-  run-newman:
+  run-postman-cli:
     runs-on: ubuntu-latest
+    env:
+      # Usa el secreto que ya creaste en GitHub Settings > Secrets and variables
+      POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Newman + HTML reporter
+      - name: Install Postman CLI
         run: |
-          npm install -g newman newman-reporter-htmlextra
+          curl -o- "https://dl-cli.pstmn.io/install/linux.sh" | sh
 
-      - name: Run Postman collection
+      - name: Login to Postman
         run: |
-          mkdir -p reports
-          newman run tests/rickandmorty_collection.json \
-            -e tests/rickandmorty_environment.json \
-            -r cli,htmlextra \
-            --reporter-htmlextra-export reports/newman-report.html
+          echo "$POSTMAN_API_KEY" | postman login --with-api-key
 
-      - name: Upload HTML report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: newman-report
-          path: reports/newman-report.html
+      - name: Run collection from Postman Cloud
+        run: |
+          postman collection run 20016255-55c899e1-089e-4721-94ef-c6b16778af73 \
+            -e 20016255-9b06f11b-cbac-45c2-9c7e-37af71a24185
