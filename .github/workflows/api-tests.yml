@@ -17,17 +17,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Inspect installer headers (debug)
+      - name: Install Postman CLI via npm (alternativa)
         run: |
-           curl -I -L https://dl-cli.pstmn.io/install/linux.sh
+          npm i -g @postman/cli
+          postman --version
 
-      - name: Install Postman CLI (robusto)
-        run: |
-          set -euo pipefail
-          curl -fsSL -o /tmp/postman_install.sh https://dl-cli.pstmn.io/install/linux.sh
-          sed -n '1,5p' /tmp/postman_install.sh  # debug: muestra primeras 5 líneas
-          bash /tmp/postman_install.sh
-  
 
       - name: Login to Postman
         run: |
