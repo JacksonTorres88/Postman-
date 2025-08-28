@@ -1,4 +1,4 @@
-Pruebas de API con Postman + Newman + GitHub Actions
+Pruebas de API con Postman + Newman + GitHub Actions.
 
 Colección de pruebas de la API de Rick & Morty creada en Postman, ejecutada automáticamente con Newman (CLI) y GitHub Actions.
 Incluye casos positivos (200 + validación de JSON + tiempo) y negativos (404).
