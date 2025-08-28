@@ -94,7 +94,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "https://rickandmortyapi.com/api/character/99999",
+					"raw": "https://rickandmortyapi.com/api/character/9999966666666",
 					"protocol": "https",
 					"host": [
 						"rickandmortyapi",
