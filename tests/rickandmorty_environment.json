@@ -1,0 +1,15 @@
+{
+	"id": "9b06f11b-cbac-45c2-9c7e-37af71a24185",
+	"name": "RickAndMorty",
+	"values": [
+		{
+			"key": "BaseUrl",
+			"value": "https://rickandmortyapi.com/api/",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2025-08-28T01:41:36.582Z",
+	"_postman_exported_using": "Postman/11.60.2"
+}
