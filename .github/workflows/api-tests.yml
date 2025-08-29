@@ -1,26 +1,18 @@
-name: API Tests (Newman)
+name: API Tests (Newman pulling from Postman)
 
 on:
   push:
     branches: [ main ]
-    paths:
-      - ".github/workflows/**"
-      - "tests/**"
-      - "README.md"
   pull_request:
-    paths:
-      - "tests/**"
-      - ".github/workflows/**"
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   run-newman:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    env:
+      POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+      POSTMAN_COLLECTION_ID: 20016255-55c899e1-089e-4721-94ef-c6b16778af73
+      POSTMAN_ENV_ID: 20016255-9b06f11b-cbac-45c2-9c7e-37af71a24185
 
     steps:
       - name: Checkout repo
@@ -29,32 +21,40 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
-      - name: Install Newman + HTML reporter
+      - name: Install jq + Newman
         run: |
+          sudo apt-get update && sudo apt-get install -y jq
           npm install -g newman newman-reporter-htmlextra
 
-      # Ajustá las rutas si tus archivos están en otro lado
-      - name: Run Postman collection with Newman
+      - name: Download latest collection & environment from Postman
+        run: |
+          mkdir -p tests
+          curl -s -H "X-Api-Key: $POSTMAN_API_KEY" \
+            "https://api.getpostman.com/collections/$POSTMAN_COLLECTION_ID" \
+            | jq '.collection' > tests/collection.json
+
+          curl -s -H "X-Api-Key: $POSTMAN_API_KEY" \
+            "https://api.getpostman.com/environments/$POSTMAN_ENV_ID" \
+            | jq '.environment' > tests/environment.json
+
+          # Debug opcional
+          jq -r '.info.name' tests/collection.json
+          jq -r '.name' tests/environment.json
+
+      - name: Run Newman (always latest from Postman)
         run: |
           mkdir -p reports
-          newman run tests/rickandmorty_collection.json \
-            -e tests/rickandmorty_environment.json \
+          newman run tests/collection.json \
+            -e tests/environment.json \
             -r cli,htmlextra,junit \
             --reporter-htmlextra-export reports/newman-report.html \
             --reporter-junit-export reports/newman-junit.xml
 
-      - name: Upload HTML report
+      - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: newman-report-html
-          path: reports/newman-report.html
-
-      - name: Upload JUnit report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: newman-report-junit
-          path: reports/newman-junit.xml
+          name: newman-reports
+          path: reports/
