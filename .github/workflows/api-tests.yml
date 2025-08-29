@@ -51,6 +51,24 @@ jobs:
             -r cli,htmlextra,junit \
             --reporter-htmlextra-export reports/newman-report.html \
             --reporter-junit-export reports/newman-junit.xml
+      - name: Run Newman (timestamped report)
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+          SHORT_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p reports
+          # Hora local de Argentina (cambiá la TZ si querés otra)
+          TS_HUMAN=$(TZ=America/Argentina/Buenos_Aires date +'%Y-%m-%d %H:%M:%S')
+          TS_FILE=$(TZ=America/Argentina/Buenos_Aires date +'%Y-%m-%d_%H-%M-%S')
+          SHORT=${SHORT_SHA:0:7}
+          TITLE="API Tests – ${BRANCH_NAME} #${GITHUB_RUN_NUMBER} (${SHORT}) – ${TS_HUMAN} ART"
+      
+          newman run tests/collection.json \
+            -e tests/environment.json \
+            -r cli,htmlextra,junit \
+            --reporter-htmlextra-title "$TITLE" \
+            --reporter-htmlextra-export "reports/newman-report-${TS_FILE}.html" \
+            --reporter-junit-export  "reports/newman-junit-${TS_FILE}.xml"
 
       - name: Upload reports
         if: always()
